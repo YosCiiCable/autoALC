@@ -1,11 +1,26 @@
-#main image
 FROM ubuntu:latest
-RUN apt update -y 
+FROM golang:1.20
 
-# - - -
+# Robotgo
+	RUN apt update -y &&\
+	# gcc\
+		apt install gcc libc6-dev -y &&\
+	# x11\
+		apt install libx11-dev xorg-dev libxtst-dev -y &&\
+	# Bitmap\
+		apt install libpng++-dev -y &&\
+	# Hook\
+		apt install xcb libxcb-xkb-dev x11-xkb-utils libx11-xcb-dev libxkbcommon-x11-dev libxkbcommon-dev -y &&\
+	# Clipboard\
+		apt install xsel xclip -y ;
 
-#dev kit image
-FROM anatolelucet/neovim
-FROM purefish/docker-fish
-#RUN touch ~/.config/fish/config.fish
-#RUN sed -i 2a'if status is-interactive\n    \# Commands to run in interactive sessions can go here\n	~/.config/fish/config.fish oh-my-posh init fish --config "/mnt/c/1system/fishBaseTheme.omp.json" | .\nend' ~/.config/fish/config.fish
+# go on Docker
+	WORKDIR /usr/src/app
+
+	COPY go.mod go.sum ./
+	RUN go mod download && go mod verify
+
+	COPY . .
+	RUN go build -v -o /usr/local/bin/app ./...
+
+	CMD ["app"]
