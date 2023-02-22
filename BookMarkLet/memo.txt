@@ -1,0 +1,15 @@
+レッスン選択(UNIT001 インプット ～ テスト 実力テスト02)
+document.getElementsByTagName('a')[12]
+document.getElementsByTagName('a')[232] 
+
+document.getElementsByTagName("td")[9]
+
+---
+
+オブジェクト.プロパティ
+オブジェクトからすると、プロパティは メソッド
+
+---
+
+HTMLElement.click()
+HTMLElement は 返り値の型。
