@@ -1,0 +1,22 @@
+以下は、URLを生成するために使用される情報です：
+
+UnitId: 学習する単元のID
+	PWH_L03_JT02-1
+UnitNo: 学習する単元の番号
+	
+UnitDivision: 単元の区分
+UnitType: 単元の種類
+UnitTitle: 単元のタイトル
+deviceType: デバイスの種類
+unitTrainingCount: 学習回数
+accountId: アカウントID
+fullName: 漢字氏名
+nameKana: ひらがな氏名
+nameLatin: ローマ字氏名
+courseId: コースID
+vendorId: ベンダーID
+subCourseId: サブコースID
+profileId: プロファイルID
+urlPart: セッションID
+IsPublic: 公開フラグ
+TempArray: サーバから返されるデータ

@@ -1,4 +1,36 @@
-// 学習画面
+        var winSt;
+        //ENTERキーを押下の処理
+        OnClickEnter("BtnBack");
+        $(function () {
+            $('html, body').animate({ scrollTop: $('.ScrollArea').offset().top }, 800);
+            //$('.ScrollArea').scrollTop();
+        });
+
+        $('#BtnBack').click(function () {
+            // btnLogin の場合は、DoLoginのActionを実行する
+            $('#form1').attr('action', '/anetn/Student/StUnitList/GoToTop');
+            $('#form1').removeAttr('target');
+            $('#form1').submit();
+
+            // サブミットが 2 回発生しないよう、false を返す
+            return false;
+
+        });
+
+        
+        $('#BtnBackUp').click(function () {
+            // btnLogin の場合は、DoLoginのActionを実行する
+            $('#form1').attr('action', '/anetn/Student/StUnitList/GoToTop');
+            $('#form1').removeAttr('target');
+            $('#form1').submit();
+
+            // サブミットが 2 回発生しないよう、false を返す
+            return false;
+
+        });
+        
+
+        // 学習画面
         function ShowLearnPage(unitId, unitNo, unitDivision, unitType, unitTitle, deviceType, unitTrainingCount, obj) {
 
             
@@ -17,10 +49,10 @@
 
 
             
-            var accountId = 's59048';
+            var accountId = 's*****';
             var fullName = encodeURIComponent('漢字');
             var nameKana = encodeURIComponent('ひらがな');
-            var nameLatin = encodeURIComponent('RO-MA ZI');
+            var nameLatin = encodeURIComponent('Ro-ma zi');
             
 
             var param = "CCd=1"
@@ -154,3 +186,13 @@
             return false;
 
         }
+
+        function UpdatePageList() {
+
+            $('#form1').attr('action', '/anetn/Student/StUnitList/Update');
+            $('#form1').removeAttr('target');
+            $('#form1').submit();
+            return false;
+        }
+
+    
