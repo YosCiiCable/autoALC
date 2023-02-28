@@ -9,4 +9,4 @@ FROM golang:1.20
 	COPY . .
 	RUN go build -v -o /usr/local/bin/app ./...
 
-	CMD ["app"]
+	#CMD ["app"]
