@@ -15,4 +15,4 @@ FROM golang:1.20
 	RUN apt update
 	RUN apt-get install google-chrome-stable -y
 
-	CMD ["app"]
+	#CMD ["app"]
