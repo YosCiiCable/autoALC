@@ -1,6 +1,12 @@
 # autoALC
 ALCを自動でしてくれるツールを作りたい人生だった…。
 
+# 実行
+~~~
+docker-compose up -d
+docker cp gocon:/usr/src/app/fullScreenshot.png ./
+~~~
+
 # ディレクトリの説明
 ## /
 開発時に、dockerの中で作業する用。
