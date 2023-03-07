@@ -9,4 +9,9 @@ FROM golang:1.20
 	COPY . .
 	RUN go build -v -o /usr/local/bin/app ./...
 
-	#CMD ["app"]
+
+	RUN apt update
+	RUN apt install ./aptFiles/google-chrome-stable_current_amd64.deb -y
+	#RUN apt-get install google-chrome-stable -y
+
+	CMD ["app"]
