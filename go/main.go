@@ -1,37 +1,73 @@
-
 package main
 
 import (
-    "github.com/sclevine/agouti"
-    "log"
-    "time"
+	"context"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/chromedp/chromedp"
 )
 
 func main() {
-    // ブラウザはChromeを指定して起動
-    driver := agouti.ChromeDriver(agouti.Browser("chrome"))
-    if err := driver.Start(); err != nil {
-        log.Fatalf("Failed to start driver:%v", err)
-    }
-    defer driver.Stop()
+	// chromeのインスタンス作成(上はデバックON)
+	ctx, cancel := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf))
+	//ctx, cancel := chromedp.NewContext(context.Background(),)
+	defer cancel()
 
-    page, err := driver.NewPage()
-    if err != nil {
-        log.Fatalf("Failed to open page:%v", err)
-    }
-    // ログインページに遷移
-    if err := page.Navigate("https://qiita.com/login"); err != nil {
-        log.Fatalf("Failed to navigate:%v", err)
-    }
-    // ID, Passの要素を取得し、値を設定
-    identity := page.FindByID("identity")
-    password := page.FindByID("password")
-    identity.Fill("Your Id Here.")
-    password.Fill("Your Passowrd Here.")
-    // formをサブミット
-    if err := page.FindByClass("loginSessionsForm_submit").Submit(); err != nil {
-        log.Fatalf("Failed to login:%v", err)
-    }
-    // 処理完了後、3秒間ブラウザを表示しておく
-    time.Sleep(3 * time.Second)
+	// chromedpのタスク
+	var buf []byte
+	err := chromedp.Run(ctx,
+		startup(),
+		donePrt(),
+		inputRunner(),
+		donePrt(),
+		chromedp.FullScreenshot(&buf, 90),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// デバック用
+	if err := os.WriteFile("fullScreenshot.png", buf, 0o644); err != nil {
+		log.Fatal("終了: スクリーンショット出力エラー")
+	}
+}
+
+func donePrt() chromedp.Tasks	{
+	fmt.Println("完了")
+	return chromedp.Tasks{
+		chromedp.WaitVisible(`/html/head/meta[1]`),
+	}
+}
+
+func startup() chromedp.Tasks {
+	// input (not using chromedp)
+	var studentNum, password string
+	fmt.Print("sを含めた学籍番号:")
+	fmt.Scan(&studentNum)
+	fmt.Print("ALCのパスワード:")
+	fmt.Scan(&password)
+	fmt.Println("実行中…")
+
+	return chromedp.Tasks{
+		chromedp.Navigate("https://nanext.alcnanext.jp/anetn/Student/stlogin/index/nit-ariake/"),
+// login
+		chromedp.WaitVisible(`//*[@id="Password"]`),
+		chromedp.SendKeys(`//*[@id="AccountId"]`, studentNum),
+		chromedp.SendKeys(`//*[@id="Password"]`, password),
+		chromedp.Click(`//*[@id="BtnLogin"]`),
+
+		// page move
+		chromedp.Click(`//*[@id="LbtSubCourseLink_1"]`, chromedp.NodeVisible),
+		chromedp.Click(`//*[@id="DivAllSubCourseTable"]/table/tbody/tr/td[2]/table/tbody/tr[3]/td[1]/a`, chromedp.NodeVisible),
+
+		chromedp.WaitVisible(`/html/body/div[1]/div[5]/div[4]/div/div`),
+	}
+}
+
+func inputRunner() chromedp.Tasks {
+	return chromedp.Tasks{
+		chromedp.Click(`//*[@id="BtnLogin"]`),
+	}	
 }
