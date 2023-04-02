@@ -17,21 +17,25 @@ import (
 )
 
 func main() {
+	// 上位行をコメントアウトすることで下位行を有効化できます
+
 	// level0: chromeのインスタンス作成
 	ctx, _ := chromedp.NewContext(context.Background()) /*
-		// level0-debug1: ログあり でインスタンス作成
-		ctx, _ := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf)) /*
-		// level0-debug2: no headless でインスタンス作成
-		opts := append(chromedp.DefaultExecAllocatorOptions[:],
-			chromedp.Flag("headless", false),
-			chromedp.Flag("enable-automation", false),
-		)
-		allocCtx, _ := chromedp.NewExecAllocator(context.Background(), opts...)
-		ctx, _ := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
-		//*/
+	// level0-debug1: ログあり でインスタンス作成
+	ctx, _ := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf)) /*
+	// level0-debug2: no headless でインスタンス作成
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.Flag("headless", false),
+		chromedp.Flag("enable-automation", false),
+	)
+	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), opts...)
+	ctx, _ := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
+	//*/
 	//defer cancel()
 
 	// level1: login
+	fmt.Println("Ctrl+C で強制停止できます。(Windows)")
+	fmt.Println("全く動かない時など、お試しあれ。")
 	login(ctx)
 
 	// level2: 遷移チェック
@@ -59,11 +63,14 @@ func main() {
 	// level4: Input開始
 	if yesNo("インプット をやりますか？") {
 		fmt.Println("インプット開始………")
-		for i, k := 2, 0; i < 220; i += 2 {
-			k++
-			inputSelector(ctx, i, (i-(k/5))/2)
-			debugPic(ctx)
-			if k%5 == 0 {
+		for i, j := 2, 0; i < 220; i += 2 {
+			j++
+			k := i
+			if j%5 == 0 {
+				k++
+			}
+			inputSelector(ctx, i, (k-(j/5))/2)
+			if j%5 == 0 {
 				i++
 			}
 		}
@@ -72,6 +79,17 @@ func main() {
 	// level5: Output開始
 	if yesNo("ドリル をやりますか？") {
 		fmt.Println("ドリル開始………")
+		for i, j := 2, 0; i < 220; i += 2 {
+			j++
+			k := i
+			if j%5 == 0 {
+				k++
+			}
+			outputSelector(ctx, i, (k-(j/5))/2)
+			if j%5 == 0 {
+				i++
+			}
+		}
 	}
 }
 
@@ -124,8 +142,10 @@ func inputSelector(ctx context.Context, i int, unitNum int) {
 
 func inputer(ctx context.Context, unitNum int) {
 	var homeID, targetID target.ID = "", ""
-	fmt.Printf("Unit%dを処理中…\n", unitNum)
-	for i := 0; i < 1; {
+	fmt.Printf("Unit%dを処理中(時間かかります)…\n", unitNum)
+	debugPic(ctx)
+	debugURL(ctx)
+	for i := 0; i < 10; i++ {
 		targets, err := chromedp.Targets(ctx)
 		if err != nil {
 			log.Fatal("err@inputer-1: Failed to make a new target")
@@ -137,19 +157,27 @@ func inputer(ctx context.Context, unitNum int) {
 				}
 				if t.URL != "https://nanext.alcnanext.jp/anetn/Student/StUnitList#" {
 					targetID = t.TargetID
-					i++
+					i = 10
+				}
+				if t.URL == "https://nanext.alcnanext.jp/anetn/Student/StUnitList" {
+					fmt.Println("URLの#ない")
+					// log.Fatal("err@inputer-3: URL with # missing")
 				}
 			}
 		}
-		time.Sleep(100 * time.Millisecond)
+		fmt.Printf("homeID: %s\n", homeID)
+		time.Sleep(500 * time.Millisecond)
+		if i == 9 {
+			log.Fatal("err@inputer-2: Too many attempts to learn the URL of the input")
+		}
 	}
 
 	if homeID == "" {
-		log.Fatal("err@inputer-2: The homeID is nil")
+		log.Fatal("err@inputer-3: The homeID is nil")
 		return
 	}
 	if targetID == "" {
-		log.Fatal("err@inputer-3: The targetID is nil")
+		log.Fatal("err@inputer-4: The targetID is nil")
 		return
 	}
 	ctx, _ = chromedp.NewContext(ctx, chromedp.WithTargetID(targetID))
@@ -160,12 +188,40 @@ func inputer(ctx context.Context, unitNum int) {
 		chromedp.Click(`//*[@id="nan-toolbox-footer"]/button`, chromedp.NodeVisible),
 		chromedp.Click(`.ui-dialog-buttonset > button:nth-child(1)`, chromedp.NodeVisible),
 	); err != nil {
-		log.Fatal("err@inputer-4: Failed to click element in input")
+		log.Fatal("err@inputer-5: Failed to click element in input")
 	}
 
 	ctx, _ = chromedp.NewContext(ctx, chromedp.WithTargetID(homeID))
 
+	debugURL(ctx)
 	fmt.Printf("完了: Unit%d\n", unitNum)
+}
+
+func outputSelector(ctx context.Context, i int, unitNum int) {
+	iXPath := "//*[@id=\"nan-contents\"]/div[7]/div/table/tbody/tr[" + strconv.Itoa(i)
+	// if naming, iXPath + "]/td[4]"	is iStatusXPath
+	// if naming, iXPath + "]/td[3]/a"	is iClickXPath
+	iStatusText := "init"
+	if err := chromedp.Run(ctx,
+		chromedp.Text(iXPath+"]/td[4]", &iStatusText),
+	); err != nil {
+		log.Fatal("err@inputSelector-1: Failed to get the input-unit status")
+	}
+
+	if iStatusText == "未学習 / Not studied" || iStatusText == "参照のみ / Only opened" || iStatusText == "学習中 / In progress" {
+		if err := chromedp.Run(ctx,
+			chromedp.Click(iXPath+"]/td[3]/a", chromedp.NodeVisible),
+		); err != nil {
+			log.Fatal("err@inputSelector-2: Failed to click the input-unit")
+		}
+		inputer(ctx, unitNum)
+	} else if iStatusText == "修了 / Completed" {
+		fmt.Printf("修了済み Unit%d\n", unitNum)
+	} else {
+		fmt.Println("warning  : 続行可能な程度の例外発生、続行します。")
+		fmt.Println("---------: よければ以下の1行を開発者にお知らせください。")
+		fmt.Println("warn@inputSelector-3:Exception at last of inputer:" + iStatusText)
+	}
 }
 
 func yesNo(labelMessage string) bool {
@@ -183,6 +239,7 @@ func yesNo(labelMessage string) bool {
 }
 
 func passwdInputer(labelMessage string) string {
+	fmt.Println("赤色の x が付く場合がありますが、気にしないでください。")
 	validate := func(input string) error {
 		if len(input) < 6 {
 			return errors.New("パスワードは6~20文字の範囲の筈です…")
@@ -214,7 +271,6 @@ func debugURL(ctx context.Context) {
 		log.Fatal("err@debugURL: Failed to location url")
 	}
 	fmt.Printf("debugURL: %s\n", url)
-
 }
 
 func debugPic(ctx context.Context) {
