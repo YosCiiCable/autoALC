@@ -21,16 +21,16 @@ func main() {
 
 	// level0: chromeのインスタンス作成
 	ctx, _ := chromedp.NewContext(context.Background()) /*
-	// level0-debug1: ログあり でインスタンス作成
-	ctx, _ := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf)) /*
-	// level0-debug2: no headless でインスタンス作成
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", false),
-		chromedp.Flag("enable-automation", false),
-	)
-	allocCtx, _ := chromedp.NewExecAllocator(context.Background(), opts...)
-	ctx, _ := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
-	//*/
+		// level0-debug1: ログあり でインスタンス作成
+		ctx, _ := chromedp.NewContext(context.Background(), chromedp.WithDebugf(log.Printf)) /*
+		// level0-debug2: no headless でインスタンス作成
+		opts := append(chromedp.DefaultExecAllocatorOptions[:],
+			chromedp.Flag("headless", false),
+			chromedp.Flag("enable-automation", false),
+		)
+		allocCtx, _ := chromedp.NewExecAllocator(context.Background(), opts...)
+		ctx, _ := chromedp.NewContext(allocCtx, chromedp.WithLogf(log.Printf))
+		//*/
 	//defer cancel()
 
 	// level1: login
@@ -63,14 +63,14 @@ func main() {
 	// level4: Input開始
 	if yesNo("インプット をやりますか？") {
 		fmt.Println("インプット開始………")
-		for i, j := 2, 0; i < 220; i += 2 {
-			j++
-			k := i
-			if j%5 == 0 {
-				k++
+		for i, k := 2, 0; i < 220; i += 2 {
+			k++
+			j := i
+			if k%5 == 0 {
+				j++
 			}
-			inputSelector(ctx, i, (k-(j/5))/2)
-			if j%5 == 0 {
+			inputSelector(ctx, i, (j-(k/5))/2)
+			if k%5 == 0 {
 				i++
 			}
 		}
@@ -114,6 +114,8 @@ func login(ctx context.Context) {
 }
 
 func inputSelector(ctx context.Context, i int, unitNum int) {
+	fmt.Println("#の確認")
+	debugURL(ctx)
 	iXPath := "//*[@id=\"nan-contents\"]/div[7]/div/table/tbody/tr[" + strconv.Itoa(i)
 	// if naming, iXPath + "]/td[4]"	is iStatusXPath
 	// if naming, iXPath + "]/td[3]/a"	is iClickXPath
@@ -124,12 +126,14 @@ func inputSelector(ctx context.Context, i int, unitNum int) {
 		log.Fatal("err@inputSelector-1: Failed to get the input-unit status")
 	}
 
+	fmt.Println(130)
 	if iStatusText == "未学習 / Not studied" || iStatusText == "参照のみ / Only opened" || iStatusText == "学習中 / In progress" {
 		if err := chromedp.Run(ctx,
 			chromedp.Click(iXPath+"]/td[3]/a", chromedp.NodeVisible),
 		); err != nil {
 			log.Fatal("err@inputSelector-2: Failed to click the input-unit")
 		}
+		fmt.Println("do inputer 136")
 		inputer(ctx, unitNum)
 	} else if iStatusText == "修了 / Completed" {
 		fmt.Printf("修了済み Unit%d\n", unitNum)
@@ -143,7 +147,6 @@ func inputSelector(ctx context.Context, i int, unitNum int) {
 func inputer(ctx context.Context, unitNum int) {
 	var homeID, targetID target.ID = "", ""
 	fmt.Printf("Unit%dを処理中(時間かかります)…\n", unitNum)
-	debugPic(ctx)
 	debugURL(ctx)
 	for i := 0; i < 10; i++ {
 		targets, err := chromedp.Targets(ctx)
@@ -164,6 +167,7 @@ func inputer(ctx context.Context, unitNum int) {
 					// log.Fatal("err@inputer-3: URL with # missing")
 				}
 			}
+			fmt.Println(t)
 		}
 		fmt.Printf("homeID: %s\n", homeID)
 		time.Sleep(500 * time.Millisecond)
