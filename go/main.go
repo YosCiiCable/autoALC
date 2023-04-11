@@ -34,8 +34,7 @@ func main() {
 	//defer cancel()
 
 	// level1: login
-	fmt.Println("Ctrl+C で強制停止できます。(Windows)")
-	fmt.Println("全く動かない時など、お試しあれ。")
+	fmt.Println("Ctrl+C で強制停止できます(Windows)。全く動かない時など、お試しあれ。")
 	login(ctx)
 
 	// level2: 遷移チェック
@@ -48,16 +47,16 @@ func main() {
 
 	// level3: Unitsに移動
 	fmt.Println("ユニット一覧に移動開始………")
+	fmt.Println("この処理が数分程度掛かる場合は、強制終了した方がいいかも知れません。")
 	if err := chromedp.Run(ctx,
 		chromedp.Click(`//*[@id="LbtSubCourseLink_1"]`, chromedp.NodeVisible),
-		chromedp.Click(
-			`//*[@id="DivAllSubCourseTable"]/table/tbody/tr/td[2]/table/tbody/tr[3]/td[1]/a`,
-			chromedp.NodeVisible,
-		),
-		chromedp.WaitVisible(`//*[@id="nan-contents"]/div[1]/div/label/font`),
+		chromedp.Click(`//*[@id="DivAllSubCourseTable"]/table/tbody/tr/td[2]/table/tbody/tr[3]/td[1]/a`, chromedp.NodeVisible),
+		//chromedp.WaitVisible(`//*[@id="nan-contents"]/div[1]/div/label/font`),
 	); err != nil {
 		log.Fatal("err3: Failed to move units")
 	}
+	//chromedp.WaitVisible(`//*[@id="nan-contents"]/div[1]/div/label/font`),
+	time.Sleep(1 * time.Second)
 	fmt.Println("ユニット一覧移動完了")
 
 	// level4: Input開始
@@ -116,24 +115,24 @@ func login(ctx context.Context) {
 func inputSelector(ctx context.Context, i int, unitNum int) {
 	fmt.Println("#の確認")
 	debugURL(ctx)
-	iXPath := "//*[@id=\"nan-contents\"]/div[7]/div/table/tbody/tr[" + strconv.Itoa(i)
-	// if naming, iXPath + "]/td[4]"	is iStatusXPath
-	// if naming, iXPath + "]/td[3]/a"	is iClickXPath
 	iStatusText := "init"
+	iXPath := "//*[@id=\"nan-contents\"]/div[7]/div/table/tbody/tr[" + strconv.Itoa(i)
+	iClickXPath := iXPath + "]/td[3]/a"
+	// if makeing, iStatusXPath := iXPath + "]/td[4]"
 	if err := chromedp.Run(ctx,
 		chromedp.Text(iXPath+"]/td[4]", &iStatusText),
 	); err != nil {
 		log.Fatal("err@inputSelector-1: Failed to get the input-unit status")
 	}
 
-	fmt.Println(130)
 	if iStatusText == "未学習 / Not studied" || iStatusText == "参照のみ / Only opened" || iStatusText == "学習中 / In progress" {
+		fmt.Printf("%s]/td[3]/a\n", iXPath)
+		// 処理待ちエラー多発地帯
 		if err := chromedp.Run(ctx,
-			chromedp.Click(iXPath+"]/td[3]/a", chromedp.NodeVisible),
+			chromedp.Click(iClickXPath, chromedp.NodeVisible),
 		); err != nil {
 			log.Fatal("err@inputSelector-2: Failed to click the input-unit")
 		}
-		fmt.Println("do inputer 136")
 		inputer(ctx, unitNum)
 	} else if iStatusText == "修了 / Completed" {
 		fmt.Printf("修了済み Unit%d\n", unitNum)
@@ -147,7 +146,6 @@ func inputSelector(ctx context.Context, i int, unitNum int) {
 func inputer(ctx context.Context, unitNum int) {
 	var homeID, targetID target.ID = "", ""
 	fmt.Printf("Unit%dを処理中(時間かかります)…\n", unitNum)
-	debugURL(ctx)
 	for i := 0; i < 10; i++ {
 		targets, err := chromedp.Targets(ctx)
 		if err != nil {
@@ -163,7 +161,9 @@ func inputer(ctx context.Context, unitNum int) {
 					i = 10
 				}
 				if t.URL == "https://nanext.alcnanext.jp/anetn/Student/StUnitList" {
-					fmt.Println("URLの#ない")
+					fmt.Println("166 noooo err@inputer-3: URL with # missing")
+					debugPic(ctx)
+					debugURL(ctx)
 					// log.Fatal("err@inputer-3: URL with # missing")
 				}
 			}
