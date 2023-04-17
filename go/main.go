@@ -16,6 +16,8 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+// 処理待ちエラー多発地帯: 130line付近
+
 func main() {
 	// 上位行をコメントアウトすることで下位行を有効化できます
 
@@ -62,6 +64,18 @@ func main() {
 	// level4: Input開始
 	if yesNo("インプット をやりますか？") {
 		fmt.Println("インプット開始………")
+
+		targets, err := chromedp.Targets(ctx)
+		if err != nil {
+			log.Fatal("err@inputer-1: Failed to make a new target")
+		}
+		for _, t := range targets {
+			if t.Type == "page" && t.URL != "about:blank" {
+				fmt.Printf("homeのt:")
+				fmt.Println(t.URL)
+			}
+		}
+
 		for i, k := 2, 0; i < 220; i += 2 {
 			k++
 			j := i
@@ -169,7 +183,7 @@ func inputer(ctx context.Context, unitNum int) {
 			}
 			fmt.Println(t)
 		}
-		fmt.Printf("homeID: %s\n", homeID)
+		fmt.Printf("o186homeID: %s\n", homeID)
 		time.Sleep(500 * time.Millisecond)
 		if i == 9 {
 			log.Fatal("err@inputer-2: Too many attempts to learn the URL of the input")
@@ -186,6 +200,7 @@ func inputer(ctx context.Context, unitNum int) {
 	}
 	ctx, _ = chromedp.NewContext(ctx, chromedp.WithTargetID(targetID))
 
+	fmt.Println("203")
 	if err := chromedp.Run(ctx,
 		chromedp.Click(`//*[@id="nan-contents-cover-buttons"]/div/div[1]/button/span[1]`, chromedp.NodeVisible),
 		chromedp.Click(`.ui-dialog-buttonset > button:nth-child(1)`, chromedp.NodeVisible),
@@ -194,8 +209,14 @@ func inputer(ctx context.Context, unitNum int) {
 	); err != nil {
 		log.Fatal("err@inputer-5: Failed to click element in input")
 	}
+	fmt.Println("212")
 
-	ctx, _ = chromedp.NewContext(ctx, chromedp.WithTargetID(homeID))
+	//ctx, _ = chromedp.NewContext(ctx, chromedp.WithTargetID(homeID))
+	if err := chromedp.Run(ctx,
+		chromedp.Navigate("https://nanext.alcnanext.jp/anetn/Student/StUnitList"),
+	); err != nil {
+		log.Fatal("err@debugURL: Failed to location url")
+	}
 
 	debugURL(ctx)
 	fmt.Printf("完了: Unit%d\n", unitNum)
